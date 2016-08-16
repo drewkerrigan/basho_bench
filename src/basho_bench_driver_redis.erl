@@ -44,13 +44,12 @@ new(Id) ->
         non_existing ->
             ?FAIL_MSG("~s requires eredis module to be available on code path.\n",
                       [?MODULE]);
-        Reason ->
+        _ ->
             ok
     end,
 
     Ips  = basho_bench_config:get(redis_ips, ["127.0.0.1"]),
     Port  = basho_bench_config:get(redis_port, 6379),
-    Bucket  = basho_bench_config:get(redis_bucket, <<"test">>),
     PreloadedKeys = basho_bench_config:get(
                       redis_preloaded_keys, undefined),
 
@@ -58,24 +57,27 @@ new(Id) ->
     Targets = basho_bench_config:normalize_ips(Ips, Port),
     {TargetIp, TargetPort} = lists:nth((Id rem length(Targets)+1), Targets),
     ?INFO("Using target ~p:~p for worker ~p\n", [TargetIp, TargetPort, Id]),
+    #state {
+       pid = {TargetIp, TargetPort},
+       start_time = erlang:now(),
+       preloaded_keys = PreloadedKeys}.
+
+open_connection({TargetIp, TargetPort}) ->
     case eredis:start_link(TargetIp, TargetPort) of
         {ok, Pid} ->
-            {ok, #state { pid = Pid,
-                          bucket = Bucket,
-                          start_time = erlang:now(),
-                          preloaded_keys = PreloadedKeys
-                        }};
+            Pid;
         {error, Reason2} ->
             ?FAIL_MSG("Failed to connect eredis to ~p:~p: ~p\n",
-                      [TargetIp, TargetPort, Reason2])
+                      [TargetIp, TargetPort, Reason2]),
+            open_connection({TargetIp, TargetPort})
     end.
 
-
 run(get, KeyGen, _ValueGen, State) ->
+    Pid = open_connection(State#state.pid),
     Key = integer_to_list(KeyGen()),
     Q = ["GET", Key],
     %% ?INFO("GET: ~p", [Q]),
-    case eredis:q(State#state.pid, ["GET", Key]) of
+    case eredis:q(Pid, ["GET", Key]) of
         {ok, _} ->
             {ok, State};
         {error, notfound} ->
@@ -86,9 +88,10 @@ run(get, KeyGen, _ValueGen, State) ->
             {error, Reason, State}
     end;
 run(put, KeyGen, ValueGen, State) ->
+    Pid = open_connection(State#state.pid),
     Q = ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())],
     %% ?INFO("PUT: ~p", [Q]),
-    case eredis:q(State#state.pid, ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())]) of
+    case eredis:q(Pid, ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())]) of
         {ok, <<"OK">>} ->
             {ok, State};
         {error, disconnected} ->
