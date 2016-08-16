@@ -70,8 +70,16 @@
           }
         },
         dataType: "text",
-        complete: function () {
-          // call a function on complete 
+                             complete: function () {
+                             var c=document.getElementById("report");
+            $.ajax({
+              type: "POST",
+              url: "/",
+              data: c.toDataURL("image/png").substr(22),
+              success: function (data) {
+              console.log("Image uploaded");
+              }
+            }); 
         }
       });
     }
@@ -184,15 +192,6 @@
         imageObj.src = allCharts[i];
         ctx.drawImage(imageObj, 0, i * 200, 800, 200);
       }
-
-      $.ajax({
-        type: "POST",
-        url: "/",
-        data: c.toDataURL("image/png").substr(22),
-        success: function (data) {
-          console.log("Image uploaded");
-        }
-      });
     }
   </script>
   </head>

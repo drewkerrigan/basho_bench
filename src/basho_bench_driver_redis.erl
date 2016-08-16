@@ -55,6 +55,8 @@ open_connection({TargetIp, TargetPort}) ->
     case eredis:start_link(TargetIp, TargetPort) of
         {ok, Pid} ->
             {ok, Pid};
+        {connection_error, Reason} ->
+            {error, Reason};
         {error, Reason} ->
             %%?FAIL_MSG("Failed to connect eredis to ~p:~p: ~p\n",
             %%          [TargetIp, TargetPort, Reason]),
