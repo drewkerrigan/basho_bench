@@ -49,7 +49,7 @@ new(Id) ->
     Targets = basho_bench_config:normalize_ips(Ips, Port),
     {TargetIp, TargetPort} = lists:nth((Id rem length(Targets)+1), Targets),
     ?INFO("Using target ~p:~p for worker ~p\n", [TargetIp, TargetPort, Id]),
-    #state {pid = {TargetIp, TargetPort}}.
+    {ok, #state {pid = {TargetIp, TargetPort}}}.
 
 open_connection({TargetIp, TargetPort}) ->
     case eredis:start_link(TargetIp, TargetPort) of
