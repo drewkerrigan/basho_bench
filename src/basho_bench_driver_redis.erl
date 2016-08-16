@@ -26,11 +26,7 @@
 
 -include("basho_bench.hrl").
 
--record(state, { pid,
-                 bucket,
-                 start_time,
-                 preloaded_keys
-               }).
+-record(state, { pid }).
 
 -define(TIMEOUT_GENERAL, 62*1000).
 
@@ -50,17 +46,10 @@ new(Id) ->
 
     Ips  = basho_bench_config:get(redis_ips, ["127.0.0.1"]),
     Port  = basho_bench_config:get(redis_port, 6379),
-    PreloadedKeys = basho_bench_config:get(
-                      redis_preloaded_keys, undefined),
-
-    %% Choose the target node using our ID as a modulus
     Targets = basho_bench_config:normalize_ips(Ips, Port),
     {TargetIp, TargetPort} = lists:nth((Id rem length(Targets)+1), Targets),
     ?INFO("Using target ~p:~p for worker ~p\n", [TargetIp, TargetPort, Id]),
-    #state {
-       pid = {TargetIp, TargetPort},
-       start_time = erlang:now(),
-       preloaded_keys = PreloadedKeys}.
+    #state {pid = {TargetIp, TargetPort}}.
 
 open_connection({TargetIp, TargetPort}) ->
     case eredis:start_link(TargetIp, TargetPort) of
