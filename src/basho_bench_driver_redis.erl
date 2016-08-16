@@ -56,8 +56,8 @@ open_connection({TargetIp, TargetPort}) ->
         {ok, Pid} ->
             {ok, Pid};
         {error, Reason} ->
-            ?FAIL_MSG("Failed to connect eredis to ~p:~p: ~p\n",
-                      [TargetIp, TargetPort, Reason]),
+            %%?FAIL_MSG("Failed to connect eredis to ~p:~p: ~p\n",
+            %%          [TargetIp, TargetPort, Reason]),
             {error, Reason}
     end.
 
