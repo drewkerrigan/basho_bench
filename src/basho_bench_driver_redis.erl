@@ -75,6 +75,8 @@ run(get, KeyGen, _ValueGen, State) ->
             R = case eredis:q(P, Q) of
                 {ok, _} ->
                     {ok, State};
+                {connection_error, Reason} ->
+                    {error, Reason, State};
                 {error, notfound} ->
                     {ok, State};
                 {error, disconnected} ->
@@ -91,6 +93,8 @@ run(put, KeyGen, ValueGen, State) ->
     %% ?INFO("PUT: ~p", [Q]),
     case Pid of
         {error, Reason} ->
+            {error, Reason, State};
+        {connection_error, Reason} ->
             {error, Reason, State};
         {ok, P} ->
             R = case eredis:q(P, Q) of
