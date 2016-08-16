@@ -77,7 +77,7 @@ run(get, KeyGen, _ValueGen, State) ->
     Key = integer_to_list(KeyGen()),
     Q = ["GET", Key],
     %% ?INFO("GET: ~p", [Q]),
-    case eredis:q(Pid, ["GET", Key]) of
+    case eredis:q(Pid, Q) of
         {ok, _} ->
             {ok, State};
         {error, notfound} ->
@@ -91,7 +91,7 @@ run(put, KeyGen, ValueGen, State) ->
     Pid = open_connection(State#state.pid),
     Q = ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())],
     %% ?INFO("PUT: ~p", [Q]),
-    case eredis:q(Pid, ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())]) of
+    case eredis:q(Pid, Q) of
         {ok, <<"OK">>} ->
             {ok, State};
         {error, disconnected} ->
