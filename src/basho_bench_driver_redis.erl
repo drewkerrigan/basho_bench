@@ -54,12 +54,11 @@ new(Id) ->
 open_connection({TargetIp, TargetPort}) ->
     case eredis:start_link(TargetIp, TargetPort) of
         {ok, Pid} ->
-            Pid;
-        {error, Reason2} ->
+            {ok, Pid};
+        {error, Reason} ->
             ?FAIL_MSG("Failed to connect eredis to ~p:~p: ~p\n",
-                      [TargetIp, TargetPort, Reason2]),
-            %open_connection({TargetIp, TargetPort})
-            ok
+                      [TargetIp, TargetPort, Reason]),
+            {error, Reason}
     end.
 
 run(get, KeyGen, _ValueGen, State) ->
@@ -67,27 +66,37 @@ run(get, KeyGen, _ValueGen, State) ->
     Key = integer_to_list(KeyGen()),
     Q = ["GET", Key],
     %% ?INFO("GET: ~p", [Q]),
-    case eredis:q(Pid, Q) of
-        {ok, _} ->
-            {ok, State};
-        {error, notfound} ->
-            {ok, State};
-        {error, disconnected} ->
-            run(get, KeyGen, _ValueGen, State);
+    case Pid of
         {error, Reason} ->
-            {error, Reason, State}
+            {error, Reason, State};
+        {ok, P} ->
+            case eredis:q(P, Q) of
+                {ok, _} ->
+                    {ok, State};
+                {error, notfound} ->
+                    {ok, State};
+                {error, disconnected} ->
+                    run(get, KeyGen, _ValueGen, State);
+                {error, Reason} ->
+                    {error, Reason, State}
+            end
     end;
 run(put, KeyGen, ValueGen, State) ->
     Pid = open_connection(State#state.pid),
     Q = ["SET", integer_to_list(KeyGen()), binary_to_list(ValueGen())],
     %% ?INFO("PUT: ~p", [Q]),
-    case eredis:q(Pid, Q) of
-        {ok, <<"OK">>} ->
-            {ok, State};
-        {error, disconnected} ->
-            run(put, KeyGen, ValueGen, State);  % suboptimal, but ...
+    case Pid of
         {error, Reason} ->
-            {error, Reason, State}
+            {error, Reason, State};
+        {ok, Pid} ->
+            case eredis:q(Pid, Q) of
+                {ok, <<"OK">>} ->
+                    {ok, State};
+                {error, disconnected} ->
+                    run(put, KeyGen, ValueGen, State);  % suboptimal, but ...
+                {error, Reason} ->
+                    {error, Reason, State}
+            end
     end.
 
 
