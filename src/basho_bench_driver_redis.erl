@@ -70,7 +70,7 @@ run(get, KeyGen, _ValueGen, State) ->
         {error, Reason} ->
             {error, Reason, State};
         {ok, P} ->
-            case eredis:q(P, Q) of
+            R = case eredis:q(P, Q) of
                 {ok, _} ->
                     {ok, State};
                 {error, notfound} ->
@@ -79,7 +79,9 @@ run(get, KeyGen, _ValueGen, State) ->
                     run(get, KeyGen, _ValueGen, State);
                 {error, Reason} ->
                     {error, Reason, State}
-            end
+            end,
+            eredis:stop(P),
+            R
     end;
 run(put, KeyGen, ValueGen, State) ->
     Pid = open_connection(State#state.pid),
@@ -88,15 +90,17 @@ run(put, KeyGen, ValueGen, State) ->
     case Pid of
         {error, Reason} ->
             {error, Reason, State};
-        {ok, Pid} ->
-            case eredis:q(Pid, Q) of
+        {ok, P} ->
+            R = case eredis:q(P, Q) of
                 {ok, <<"OK">>} ->
                     {ok, State};
                 {error, disconnected} ->
                     run(put, KeyGen, ValueGen, State);  % suboptimal, but ...
                 {error, Reason} ->
                     {error, Reason, State}
-            end
+            end,
+            eredis:stop(P),
+            R
     end.
 
 
