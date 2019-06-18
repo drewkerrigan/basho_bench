@@ -19,8 +19,8 @@ RUN chown -R elixir:elixir .
 USER elixir
 
 RUN set -xe \
-  && ./rebar3 compile \
   && ./rebar3 escriptize \
-  && ln -s ./_build/default/bin/basho_bench
+  && ln -s ./_build/default/bin/basho_bench \
+  && chown -R elixir:elixir /usr/lib/R
 
 CMD sleep 10000000000000000
