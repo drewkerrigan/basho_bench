@@ -7,7 +7,7 @@ USER root
 # Install OS Packages
 RUN set -xe \
   && apk update \
-  && apk --no-cache add openssh-client R R-dev \
+  && apk --no-cache add openssh-client xfvb R R-dev \
   && chown -R elixir:elixir /usr/lib/R \
   && rm -rf /var/cache/apk/*
 
