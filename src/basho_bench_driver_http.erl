@@ -224,6 +224,8 @@ do_head(Url, Headers) ->
             {ok, Url, Header};
         {ok, "200", Header, _Body} ->
             {ok, Url, Header};
+        {ok, "204", Header, _Body} ->
+            {ok, Url, Header};
         {ok, Code, _Header, _Body} ->
             {error, {http_error, Code}};
         {error, Reason} ->
