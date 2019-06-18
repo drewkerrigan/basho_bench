@@ -6,7 +6,8 @@ USER root
 
 # Install OS Packages
 RUN set -xe \
-  && apk --no-cache add openssh-client \
+  && apk update \
+  && apk --no-cache add openssh-client R \
   && rm -rf /var/cache/apk/*
 
 # Application User Setup
@@ -16,5 +17,10 @@ ADD . /home/elixir
 WORKDIR /home/elixir
 RUN chown -R elixir:elixir .
 USER elixir
+
+RUN set -xe \
+  && ./rebar3 compile \
+  && ./rebar3 escriptize \
+  && ln -s ./_build/default/bin/basho_bench
 
 CMD sleep 10000000000000000
