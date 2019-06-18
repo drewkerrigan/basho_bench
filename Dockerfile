@@ -8,6 +8,7 @@ USER root
 RUN set -xe \
   && apk update \
   && apk --no-cache add openssh-client R \
+  && chown -R elixir:elixir /usr/lib/R \
   && rm -rf /var/cache/apk/*
 
 # Application User Setup
@@ -20,7 +21,6 @@ USER elixir
 
 RUN set -xe \
   && ./rebar3 escriptize \
-  && ln -s ./_build/default/bin/basho_bench \
-  && chown -R elixir:elixir /usr/lib/R
+  && ln -s ./_build/default/bin/basho_bench
 
 CMD sleep 10000000000000000
