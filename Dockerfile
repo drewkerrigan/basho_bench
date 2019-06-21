@@ -21,6 +21,7 @@ USER elixir
 
 RUN set -xe \
   && ./rebar3 escriptize \
+  && Rscript --vanilla priv/common.r \
   && ln -s ./_build/default/bin/basho_bench
 
 CMD sleep 10000000000000000
