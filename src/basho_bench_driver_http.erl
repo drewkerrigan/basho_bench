@@ -95,6 +95,21 @@ run({get, Target, HeaderName}, KeyGen, ValueGen, State) ->
             {error, Reason, S2}
     end;
 
+run({head, Target}, KeyGen, ValueGen, State) ->
+    run({head, Target, undefined}, KeyGen, ValueGen, State);
+run({head, Target, HeaderName}, KeyGen, ValueGen, State) ->
+    {Url, S2} = next_url(Target, KeyGen, ValueGen, State),
+    Headers = proplists:get_value(HeaderName, S2#state.headers, []),
+
+    case do_head(Url, Headers) of
+        {not_found, _Url} ->
+            {ok, S2};
+        {ok, _Url, _Header} ->
+            {ok, S2};
+        {error, Reason} ->
+            {error, Reason, S2}
+    end;
+
 run({put, Target, ValueName}, KeyGen, ValueGen, State) ->
     run({put, Target, ValueName, undefined}, KeyGen, ValueGen, State);
 run({put, Target, ValueName, HeaderName}, KeyGen, ValueGen, State) ->
@@ -199,6 +214,22 @@ build_value(ValueName, KeyGen, ValueGen, State) ->
         {FormattedValue, GeneratorNames} ->
             build_formatted_value(FormattedValue, GeneratorNames, State#state.generators, KeyGen, ValueGen);
         V -> evaluate_generator(V, State#state.generators, KeyGen, ValueGen)
+    end.
+
+do_head(Url, Headers) ->
+    case send_request(Url, Headers, head, [], [{resonse_format, binary}]) of
+        {ok, "404", _Header, _Body} ->
+            {not_found, Url};
+        {ok, "300", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, "200", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, "204", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, Code, _Header, _Body} ->
+            {error, {http_error, Code}};
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 do_get(Url, Headers) ->
