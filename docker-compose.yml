@@ -1,0 +1,8 @@
+version: '2.1'
+services:
+
+  bench:
+    image: registry.sofi.com/basho-bench:master
+    container_name: bench
+    volumes:
+      - ./tests:/home/elixir/tests
