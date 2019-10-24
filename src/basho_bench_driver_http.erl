@@ -406,11 +406,15 @@ send_request(Url, Headers, Method, Body, Options, Count) ->
     end.
 
 
-should_retry({error, send_failed})       -> true;
-should_retry({error, connection_closed}) -> true;
-should_retry({'EXIT', {normal, _}})      -> true;
-should_retry({'EXIT', {noproc, _}})      -> true;
-should_retry(_)                          -> false.
+should_retry({error, send_failed})                 -> true;
+should_retry({error, connection_closed})           -> true;
+should_retry({error, connection_closed_no_retry})  -> true;
+should_retry({error, req_timedout})                -> true;
+should_retry({'EXIT', {normal, _}})                -> true;
+should_retry({'EXIT', {noproc, _}})                -> true;
+should_retry({'EXIT', {timeout, _}})               -> true;
+should_retry({'EXIT', {req_timedout, _}})          -> true;
+should_retry(_)                                    -> false.
 
 normalize_error(Method, {'EXIT', {timeout, _}})  -> {error, {Method, timeout}};
 normalize_error(Method, {'EXIT', Reason})        -> {error, {Method, 'EXIT', Reason}};
