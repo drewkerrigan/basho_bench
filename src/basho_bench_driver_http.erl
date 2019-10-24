@@ -409,6 +409,7 @@ send_request(Url, Headers, Method, Body, Options, Count) ->
 should_retry({error, send_failed})                 -> true;
 should_retry({error, connection_closed})           -> true;
 should_retry({error, connection_closed_no_retry})  -> true;
+should_retry({error, connection_closing})          -> true;
 should_retry({error, req_timedout})                -> true;
 should_retry({'EXIT', {normal, _}})                -> true;
 should_retry({'EXIT', {noproc, _}})                -> true;
