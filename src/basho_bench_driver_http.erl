@@ -179,12 +179,12 @@ build_formatted_value(String, GeneratorNames, Generators, KeyGen, ValueGen) ->
     io_lib:format(String, Values).
 
 %% Round robin sub-target selection
-next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State) 
+next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State)
         when is_list(Targets), Index > length(Targets) ->
     OtherIndexes = proplists:delete(TargetName, State#state.target_indexes),
     S2 = State#state{target_indexes = [{TargetName, 1} | OtherIndexes]},
     next_url({TargetName, 1, Targets}, KeyGen, ValueGen, S2);
-next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State) 
+next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State)
         when is_list(Targets) ->
     OtherIndexes = proplists:delete(TargetName, State#state.target_indexes),
     Url = build_url(lists:nth(Index, Targets), State#state.generators, KeyGen, ValueGen),
@@ -194,7 +194,7 @@ next_url({_, _, Target}, KeyGen, ValueGen, State) when is_tuple(Target) ->
     Url = build_url(Target, State#state.generators, KeyGen, ValueGen),
     {Url, State};
 next_url(TargetName, KeyGen, ValueGen, State) when is_atom(TargetName) ->
-    Index = proplists:get_value(TargetName, State#state.target_indexes), 
+    Index = proplists:get_value(TargetName, State#state.target_indexes),
     Target = proplists:get_value(TargetName, State#state.targets),
     next_url({TargetName, Index, Target}, KeyGen, ValueGen, State).
 
