@@ -81,7 +81,7 @@ new(Id) ->
     Targets = basho_bench_config:normalize_ips(Ips, DefaultPort),
     BaseUrls = list_to_tuple([#url{host=IP, port=Port}
                               || {IP, Port} <- Targets]),
-    BaseUrlsIndex = random:uniform(tuple_size(BaseUrls)),
+    BaseUrlsIndex = rand:uniform(tuple_size(BaseUrls)),
 
     UserCount = basho_bench_config:get(cs2_user_count, 5),
     HostBase  = list_to_binary(basho_bench_config:get(cs2_host_base, "s3.amazonaws.com")),
@@ -489,13 +489,13 @@ should_disconnect_secs(Seconds, Url) ->
     Key = {last_disconnect, Url#url.host},
     case erlang:get(Key) of
         undefined ->
-            erlang:put(Key, erlang:now()),
+            erlang:put(Key, erlang:timestamp()),
             false;
         Time when is_tuple(Time) andalso size(Time) == 3 ->
-            Diff = timer:now_diff(erlang:now(), Time),
+            Diff = timer:now_diff(erlang:timestamp(), Time),
             if
                 Diff >= Seconds * 1000000 ->
-                    erlang:put(Key, erlang:now()),
+                    erlang:put(Key, erlang:timestamp()),
                     true;
                 true -> false
             end
@@ -505,7 +505,7 @@ clear_disconnect_freq(Url) ->
     case erlang:get(disconnect_freq) of
         infinity -> ok;
         {ops, _Count} -> erlang:put({ops_since_disconnect, Url#url.host}, 0);
-        _Seconds -> erlang:put({last_disconnect, Url#url.host}, os:timestamp())
+        _Seconds -> erlang:put({last_disconnect, Url#url.host}, erlang:timestamp())
     end.
 
 send_request(Url, HostBase, Method, Headers, Body, User) ->

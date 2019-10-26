@@ -63,11 +63,18 @@ main(Args) ->
     CrashLog = filename:join([TestDir, "crash.log"]),
     application:set_env(lager,
                         handlers,
-                        [{lager_console_backend, ConsoleLagerLevel},
+                        [
+                         % {lager_console_backend, ConsoleLagerLevel},
+                         {lager_console_backend, [
+                           {level, ConsoleLagerLevel},
+                           {formatter, lager_default_formatter},
+                           {formatter_config, [time, " ", " [", severity, "] [", module, ":", line, "] ", color, message, "\e[0m\r\n"]}
+                         ]},
                          {lager_file_backend, [{file, ErrorLog},   {level, error}, {size, 10485760}, {date, "$D0"}, {count, 5}]},
                          {lager_file_backend, [{file, ConsoleLog}, {level, debug}, {size, 10485760}, {date, "$D0"}, {count, 5}]}
                         ]),
     application:set_env(lager, crash_log, CrashLog),
+    application:set_env(lager, colored, true),
     application:set_env(lager, error_logger_redirect, false),
     lager:start(),
 
@@ -345,11 +352,5 @@ distribute_app(App) ->
     end,
     lists:foreach(EbinDirDistributeFun, EbinsDir),
     ok.
-%% just a utility, should be in basho_bench_utils.erl
-%% but 's' is for multiple utilities, and so far this
-%% is the only one.
--ifdef(new_hash).
+
 md5(Bin) -> crypto:hash(md5, Bin).
--else.
-md5(Bin) -> crypto:md5(Bin).
--endif.
