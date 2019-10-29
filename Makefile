@@ -6,12 +6,13 @@ PKG_ID           = basho-bench-$(PKG_VERSION)
 PKG_BUILD        = 1
 BASE_DIR         = $(shell pwd)
 ERLANG_BIN       = $(shell dirname $(shell which erl))
-REBAR           ?= $(BASE_DIR)/rebar
+REBAR           ?= $(BASE_DIR)/rebar3
 OVERLAY_VARS    ?=
 
 
 all: deps compile
-	$(REBAR) skip_deps=true escriptize
+	$(REBAR) escriptize
+	ln -s -f _build/default/bin/basho_bench
 
 .PHONY: deps compile rel lock locked-all locked-deps
 
@@ -36,14 +37,14 @@ locked-deps:
 
 compile: deps
 	# Temp hack to work around https://github.com/basho/riak-erlang-client/issues/151
-	(cd deps/riak_pb ; $(REBAR) clean compile deps_dir=..)
+	# (cd deps/riak_pb ; $(REBAR) clean compile deps_dir=..)
 	@($(REBAR) compile)
 
 clean:
 	@$(REBAR) clean
 
 distclean: clean
-	@rm -rf basho_bench deps
+	@rm -rf basho_bench _build
 
 results:
 	Rscript --vanilla priv/summary.r -i tests/current
