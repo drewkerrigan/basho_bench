@@ -1,3 +1,4 @@
+{"1.1.0",
 [{<<"bear">>,
   {git,"git://github.com/boundary/bear.git",
        {ref,"b1882d7ee88e775d961a2678e4fafecef7f77705"}},
@@ -18,10 +19,7 @@
   {git,"git://github.com/jcomellas/getopt",
        {ref,"388dc95caa7fb97ec7db8cfc39246a36aba61bd8"}},
   0},
- {<<"goldrush">>,
-  {git,"git://github.com/DeadZen/goldrush.git",
-       {ref,"212299233c7e7eb63a97be2777e1c05ebaa58dbe"}},
-  1},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},1},
  {<<"hamcrest">>,
   {git,"https://github.com/basho/hamcrest-erlang.git",
        {ref,"ad3dbab419762fc2d5821abb88b989da006b85c6"}},
@@ -31,8 +29,8 @@
        {ref,"e8ae353c16d4f0897abb9f80025b52925b974dd1"}},
   0},
  {<<"lager">>,
-  {git,"git://github.com/basho/lager",
-       {ref,"8187757388c9adc915379caaab36a2f2ca26e944"}},
+  {git,"git://github.com/erlang-lager/lager",
+       {ref,"22e62f28e5afabe90a6f31bcde367a2b5799fc94"}},
   0},
  {<<"lz4">>,
   {git,"https://github.com/szktty/erlang-lz4.git",
@@ -81,4 +79,8 @@
  {<<"uuid">>,
   {git,"https://github.com/okeuday/uuid.git",
        {ref,"23167ed8689f656ea6765572215a40b9856d7886"}},
-  1}].
+  1}]}.
+[
+{pkg_hash,[
+ {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>}]}
+].
