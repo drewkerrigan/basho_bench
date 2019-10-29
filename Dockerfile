@@ -1,23 +1,22 @@
-FROM registry.sofi.com/sofi-alpine-elixir-v1_8_1:master
-MAINTAINER dev@sofi.org
-
-# Setup Application Release
-USER root
+FROM erlang:22.1.4-alpine
 
 # Install OS Packages
 RUN set -xe \
   && apk update \
-  && apk --no-cache add openssh-client xvfb R R-dev \
-  && chown -R elixir:elixir /usr/lib/R \
+  && apk --no-cache add openssh-client xvfb R R-dev curl make git bash g++ vim \
+  && chown -R root:root /usr/lib/R \
   && rm -rf /var/cache/apk/*
 
 # Application User Setup
-ADD . /home/elixir
+ADD . /opt/basho-bench
 
 # Switch User
-WORKDIR /home/elixir
-RUN chown -R elixir:elixir .
-USER elixir
+WORKDIR /opt/basho-bench
+
+RUN set -xe \
+    && curl -fSL -o rebar3 "https://s3.amazonaws.com/rebar3-nightly/rebar3" \
+    && chmod +x ./rebar3 \
+    && ./rebar3 local install
 
 RUN set -xe \
   && ./rebar3 escriptize \
