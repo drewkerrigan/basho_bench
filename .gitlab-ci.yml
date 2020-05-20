@@ -1,0 +1,22 @@
+include:
+  - project: 'sofiinc/devops/sdlc'
+    file: '/sdlc.yml'
+
+stages:
+  - build
+  - docker
+
+sdlc:
+  stage: build
+
+docker:
+  stage: docker
+  image: registry.sofi.com/build-scripts:master
+  services:
+    - docker:dind
+  script:
+    - export bamboo_planName="-basho-bench"
+    - export bamboo_buildNumber="$((CI_OFFSET + CI_PIPELINE_IID))"
+    - export bamboo_planRepository_branchName=$CI_COMMIT_REF_NAME
+    - mv /scripts ./scripts
+    - ./scripts/base.build

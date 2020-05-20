@@ -32,7 +32,7 @@
         },
         dataType: "text",
         complete: function () {
-          // call a function on complete 
+          // call a function on complete
         }
       });
 
@@ -71,7 +71,7 @@
         },
         dataType: "text",
         complete: function () {
-          // call a function on complete 
+          // call a function on complete
         }
       });
     }
@@ -116,9 +116,9 @@
         data4.addRows([[elapsed, max]]);
       }
 
-      return [[data1, "Mean, Median, 95th Percentile Latencies"], 
-              [data2, "99th Percentile Latencies"], 
-              [data3, "99.9th Percentile Latencies"], 
+      return [[data1, "Mean, Median, 95th Percentile Latencies"],
+              [data2, "99th Percentile Latencies"],
+              [data3, "99.9th Percentile Latencies"],
               [data4, "Max Latencies"]];
     }
 
@@ -191,6 +191,10 @@
         data: c.toDataURL("image/png").substr(22),
         success: function (data) {
           console.log("Image uploaded");
+        },
+        error: function (req, status, err) {
+          // can we get any useful detail out of this?
+          console.log("Image Upload Failure.");
         }
       });
     }

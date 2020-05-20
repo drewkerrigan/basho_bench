@@ -95,6 +95,21 @@ run({get, Target, HeaderName}, KeyGen, ValueGen, State) ->
             {error, Reason, S2}
     end;
 
+run({head, Target}, KeyGen, ValueGen, State) ->
+    run({head, Target, undefined}, KeyGen, ValueGen, State);
+run({head, Target, HeaderName}, KeyGen, ValueGen, State) ->
+    {Url, S2} = next_url(Target, KeyGen, ValueGen, State),
+    Headers = proplists:get_value(HeaderName, S2#state.headers, []),
+
+    case do_head(Url, Headers) of
+        {not_found, _Url} ->
+            {ok, S2};
+        {ok, _Url, _Header} ->
+            {ok, S2};
+        {error, Reason} ->
+            {error, Reason, S2}
+    end;
+
 run({put, Target, ValueName}, KeyGen, ValueGen, State) ->
     run({put, Target, ValueName, undefined}, KeyGen, ValueGen, State);
 run({put, Target, ValueName, HeaderName}, KeyGen, ValueGen, State) ->
@@ -164,12 +179,12 @@ build_formatted_value(String, GeneratorNames, Generators, KeyGen, ValueGen) ->
     io_lib:format(String, Values).
 
 %% Round robin sub-target selection
-next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State) 
+next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State)
         when is_list(Targets), Index > length(Targets) ->
     OtherIndexes = proplists:delete(TargetName, State#state.target_indexes),
     S2 = State#state{target_indexes = [{TargetName, 1} | OtherIndexes]},
     next_url({TargetName, 1, Targets}, KeyGen, ValueGen, S2);
-next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State) 
+next_url({TargetName, Index, Targets}, KeyGen, ValueGen, State)
         when is_list(Targets) ->
     OtherIndexes = proplists:delete(TargetName, State#state.target_indexes),
     Url = build_url(lists:nth(Index, Targets), State#state.generators, KeyGen, ValueGen),
@@ -179,7 +194,7 @@ next_url({_, _, Target}, KeyGen, ValueGen, State) when is_tuple(Target) ->
     Url = build_url(Target, State#state.generators, KeyGen, ValueGen),
     {Url, State};
 next_url(TargetName, KeyGen, ValueGen, State) when is_atom(TargetName) ->
-    Index = proplists:get_value(TargetName, State#state.target_indexes), 
+    Index = proplists:get_value(TargetName, State#state.target_indexes),
     Target = proplists:get_value(TargetName, State#state.targets),
     next_url({TargetName, Index, Target}, KeyGen, ValueGen, State).
 
@@ -199,6 +214,22 @@ build_value(ValueName, KeyGen, ValueGen, State) ->
         {FormattedValue, GeneratorNames} ->
             build_formatted_value(FormattedValue, GeneratorNames, State#state.generators, KeyGen, ValueGen);
         V -> evaluate_generator(V, State#state.generators, KeyGen, ValueGen)
+    end.
+
+do_head(Url, Headers) ->
+    case send_request(Url, Headers, head, [], [{resonse_format, binary}]) of
+        {ok, "404", _Header, _Body} ->
+            {not_found, Url};
+        {ok, "300", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, "200", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, "204", Header, _Body} ->
+            {ok, Url, Header};
+        {ok, Code, _Header, _Body} ->
+            {error, {http_error, Code}};
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 do_get(Url, Headers) ->
@@ -331,13 +362,13 @@ should_disconnect_secs(Seconds, Url) ->
     Key = {last_disconnect, Url#url.host},
     case erlang:get(Key) of
         undefined ->
-            erlang:put(Key, erlang:now()),
+            erlang:put(Key, erlang:timestamp()),
             false;
         Time when is_tuple(Time) andalso size(Time) == 3 ->
-            Diff = timer:now_diff(erlang:now(), Time),
+            Diff = timer:now_diff(erlang:timestamp(), Time),
             if
                 Diff >= Seconds * 1000000 ->
-                    erlang:put(Key, erlang:now()),
+                    erlang:put(Key, erlang:timestamp()),
                     true;
                 true -> false
             end
@@ -347,7 +378,7 @@ clear_disconnect_freq(Url) ->
     case erlang:get(disconnect_freq) of
         infinity -> ok;
         {ops, _Count} -> erlang:put({ops_since_disconnect, Url#url.host}, 0);
-        _Seconds -> erlang:put({last_disconnect, Url#url.host}, erlang:now())
+        _Seconds -> erlang:put({last_disconnect, Url#url.host}, erlang:timestamp())
     end.
 
 send_request(Url, Headers, Method, Body, Options) ->
@@ -375,11 +406,16 @@ send_request(Url, Headers, Method, Body, Options, Count) ->
     end.
 
 
-should_retry({error, send_failed})       -> true;
-should_retry({error, connection_closed}) -> true;
-should_retry({'EXIT', {normal, _}})      -> true;
-should_retry({'EXIT', {noproc, _}})      -> true;
-should_retry(_)                          -> false.
+should_retry({error, send_failed})                 -> true;
+should_retry({error, connection_closed})           -> true;
+should_retry({error, connection_closed_no_retry})  -> true;
+should_retry({error, connection_closing})          -> true;
+should_retry({error, req_timedout})                -> true;
+should_retry({'EXIT', {normal, _}})                -> true;
+should_retry({'EXIT', {noproc, _}})                -> true;
+should_retry({'EXIT', {timeout, _}})               -> true;
+should_retry({'EXIT', {req_timedout, _}})          -> true;
+should_retry(_)                                    -> false.
 
 normalize_error(Method, {'EXIT', {timeout, _}})  -> {error, {Method, timeout}};
 normalize_error(Method, {'EXIT', Reason})        -> {error, {Method, 'EXIT', Reason}};
